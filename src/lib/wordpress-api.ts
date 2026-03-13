@@ -54,6 +54,7 @@ export function transformWPPlugin(wp: WPPlugin) {
     tags: Object.values(wp.tags || {}),
     verifiedReviews: Math.floor((wp.num_ratings || 0) * 0.6), // Estimate 60% verified
     category: guessCategory(wp.tags, wp.short_description || ''),
+    features: Object.values(wp.tags || {}).slice(0, 6),
   };
 }
 

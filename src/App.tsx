@@ -1393,7 +1393,7 @@ function PluginDetailPage() {
                 <p className="text-lg text-slate-600 mb-8 leading-relaxed font-medium">{plugin.description}</p>
 
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {plugin.features.map(f => (
+                  {(plugin.features || []).map(f => (
                     <span key={f} className="px-4 py-1.5 bg-white text-slate-600 text-xs font-bold rounded-full border border-slate-200 shadow-sm uppercase tracking-wider">
                       {f}
                     </span>
