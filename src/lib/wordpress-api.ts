@@ -43,7 +43,7 @@ export function transformWPPlugin(wp: WPPlugin) {
     fullDescription: wp.description?.replace(/<[^>]*>/g, '') || '',
     developer: wp.author.replace(/<[^>]*>/g, ''),
     website: wp.homepage,
-    lastUpdated: wp.last_updated,
+    lastUpdated: wp.last_updated ? new Date(wp.last_updated).toISOString() : new Date().toISOString(),
     rating: wp.rating / 20 || 0, // WP ratings are out of 100
     reviewCount: wp.num_ratings || 0,
     activeInstalls: wp.downloaded || 0,

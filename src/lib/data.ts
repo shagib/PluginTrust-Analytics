@@ -872,6 +872,8 @@ export function searchPlugins(query: string): Plugin[] {
 }
 
 export function formatNumber(num: number): string {
+  if (!num || num <= 0) return '0';
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B+';
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M+';
   if (num >= 1000) return (num / 1000).toFixed(0) + 'K+';
   return num.toString();
@@ -1114,9 +1116,19 @@ export function generateSecurityAnalysis(plugin: Partial<Plugin>): SecurityAnaly
 // Generate fake review analysis for plugins not in our database
 export function generateFakeReviewAnalysis(plugin: Partial<Plugin>): FakeReviewAnalysis {
   const reviewCount = plugin.reviewCount || 100;
-  const realPercentage = reviewCount > 10000 ? 82 : reviewCount > 1000 ? 75 : 70;
-  const fakePercentage = reviewCount > 10000 ? 3 : reviewCount > 1000 ? 5 : 8;
+  const rating = plugin.rating || 0;
+  
+  // Calculate percentages based on review count and rating
+  // Higher rated plugins with more reviews tend to have more verified reviews
+  const realPercentage = reviewCount > 10000 ? 85 : reviewCount > 5000 ? 80 : reviewCount > 1000 ? 75 : 70;
+  const fakePercentage = reviewCount > 10000 ? 2 : reviewCount > 5000 ? 3 : reviewCount > 1000 ? 5 : 8;
   const suspiciousPercentage = 100 - realPercentage - fakePercentage;
+  
+  // Generate sentiment based on plugin rating
+  const positive = Math.min(95, Math.max(40, Math.round(rating * 20 - 5)));
+  const negative = Math.min(30, Math.max(2, 100 - positive - 15));
+  const neutral = 100 - positive - negative;
+  const avgSentimentScore = (positive - negative) / 100;
   
   return {
     pluginId: plugin.id || '',
@@ -1127,7 +1139,7 @@ export function generateFakeReviewAnalysis(plugin: Partial<Plugin>): FakeReviewA
     realPercentage,
     suspiciousPercentage,
     fakePercentage,
-    sentimentAnalysis: { positive: 65, neutral: 20, negative: 15, avgSentimentScore: 0.50 },
+    sentimentAnalysis: { positive, neutral, negative, avgSentimentScore },
     flaggedReviews: [],
   };
 }

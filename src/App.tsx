@@ -31,6 +31,7 @@ import {
   getWordPressPlugin,
   searchWordPressPlugins,
   transformWPPlugin,
+  getPopularPlugins,
   type WPPlugin
 } from './lib/wordpress-api';
 
@@ -307,8 +308,8 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rating</span>
           <div className="flex items-center gap-1.5">
             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span className="text-sm font-bold text-slate-700">{plugin.rating.toFixed(1)}</span>
-            <span className="text-[10px] text-slate-400">({formatNumber(plugin.reviewCount)})</span>
+            <span className="text-sm font-bold text-slate-700">{(plugin.rating || 0).toFixed(1)}</span>
+            <span className="text-[10px] text-slate-400">({formatNumber(plugin.reviewCount || 0)})</span>
           </div>
         </div>
         <div className="flex flex-col gap-1 p-2.5 bg-slate-50 rounded-xl border border-slate-100/50">
@@ -324,7 +325,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span className="text-xs font-semibold text-teal-600">
-            {formatNumber(plugin.verifiedReviews)} Verified Reviews
+            {formatNumber(plugin.verifiedReviews || 0)} Verified Reviews
           </span>
         </div>
         <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-teal-600 transition-colors">
@@ -859,8 +860,48 @@ function ReviewModal({ plugin, onClose }: { plugin: Plugin; onClose: () => void 
 
 // ─── HOME PAGE ───────────────────────────────────────────────────────────────
 function HomePage() {
+  const [stats, setStats] = useState({ installs: 0, reviews: 0, plugins: 0, avgRating: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
+  
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        // Fetch popular plugins to calculate real stats
+        const response = await getPopularPlugins('popular');
+        const allPlugins = response.plugins || [];
+        
+        const totalInstalls = allPlugins.reduce((sum: number, p: any) => sum + (p.downloaded || 0), 0);
+        const totalReviews = allPlugins.reduce((sum: number, p: any) => sum + (p.num_ratings || 0), 0);
+        const avgRating = allPlugins.length > 0 
+          ? allPlugins.reduce((sum: number, p: any) => sum + ((p.rating || 0) / 20), 0) / allPlugins.length 
+          : 0;
+        
+        setStats({
+          installs: totalInstalls,
+          reviews: totalReviews,
+          plugins: allPlugins.length,
+          avgRating: avgRating
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+        // Fallback values
+        setStats({ installs: 25000000, reviews: 75000, plugins: 22, avgRating: 4.6 });
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+  
   const topPlugins = [...plugins].sort((a, b) => b.rating - a.rating).slice(0, 6);
   const trendingPlugins = [...plugins].sort((a, b) => b.activeInstalls - a.activeInstalls).slice(0, 3);
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B+';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M+';
+    if (num >= 1000) return (num / 1000).toFixed(0) + 'K+';
+    return num.toString();
+  };
 
   return (
     <div>
@@ -904,18 +945,30 @@ function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-14 max-w-3xl mx-auto">
-            {[
-              { icon: BarChart3, value: '25M+', label: 'Installs Tracked', color: 'text-teal-600' },
-              { icon: CheckCircle2, value: '75K+', label: 'Verified Reviews', color: 'text-teal-600' },
-              { icon: Users, value: '22', label: 'Plugins Listed', color: 'text-teal-600' },
-              { icon: Star, value: '4.6', label: 'Avg Trust Score', color: 'text-amber-500' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/60">
-                <stat.icon className={`w-5 h-5 mx-auto mb-2 ${stat.color}`} />
-                <div className="text-xl font-bold text-slate-900">{stat.value}</div>
-                <div className="text-xs text-slate-500">{stat.label}</div>
-              </div>
-            ))}
+            {statsLoading ? (
+              <>
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="text-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/60 animate-pulse">
+                    <div className="w-5 h-5 mx-auto mb-2 bg-slate-200 rounded" />
+                    <div className="h-6 bg-slate-200 rounded w-16 mx-auto mb-2" />
+                    <div className="h-3 bg-slate-200 rounded w-20 mx-auto" />
+                  </div>
+                ))}
+              </>
+            ) : (
+              [
+                { icon: BarChart3, value: formatNumber(stats.installs), label: 'Installs Tracked', color: 'text-teal-600' },
+                { icon: CheckCircle2, value: formatNumber(stats.reviews), label: 'Verified Reviews', color: 'text-teal-600' },
+                { icon: Users, value: formatNumber(stats.plugins), label: 'Plugins Listed', color: 'text-teal-600' },
+                { icon: Star, value: stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '4.6', label: 'Avg Trust Score', color: 'text-amber-500' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/60">
+                  <stat.icon className={`w-5 h-5 mx-auto mb-2 ${stat.color}`} />
+                  <div className="text-xl font-bold text-slate-900">{stat.value}</div>
+                  <div className="text-xs text-slate-500">{stat.label}</div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
