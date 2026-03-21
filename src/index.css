@@ -145,6 +145,17 @@
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
+@keyframes progress-indefinite {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-progress-indefinite {
+  width: 100%;
+  animation: progress-indefinite 1.5s infinite ease-in-out;
+}
+
 /* Stagger animations */
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }

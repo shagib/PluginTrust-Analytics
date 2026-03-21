@@ -41,7 +41,7 @@ export function transformWPPlugin(wp: WPPlugin) {
     name: wp.name.replace(/<[^>]*>/g, ''), // Strip HTML
     description: wp.short_description?.replace(/<[^>]*>/g, '') || wp.description?.replace(/<[^>]*>/g, '').slice(0, 200) || '',
     fullDescription: wp.description?.replace(/<[^>]*>/g, '') || '',
-    developer: wp.author.replace(/<[^>]*>/g, ''),
+    developer: wp.author?.replace(/<[^>]*>/g, '') || 'WordPress Contributor',
     website: wp.homepage,
     lastUpdated: wp.last_updated ? new Date(wp.last_updated).toISOString() : new Date().toISOString(),
     rating: wp.rating / 20 || 0, // WP ratings are out of 100
@@ -55,6 +55,7 @@ export function transformWPPlugin(wp: WPPlugin) {
     verifiedReviews: Math.floor((wp.num_ratings || 0) * 0.6), // Estimate 60% verified
     category: guessCategory(wp.tags, wp.short_description || ''),
     features: Object.values(wp.tags || {}).slice(0, 6),
+    lastUpdated: wp.last_updated ? new Date(wp.last_updated).toISOString() : new Date().toISOString(),
   };
 }
 
@@ -82,7 +83,7 @@ export async function searchWordPressPlugins(query: string, page = 1): Promise<W
   url.searchParams.set('action', 'query_plugins');
   url.searchParams.set('request[search]', query);
   url.searchParams.set('request[page]', String(page));
-  url.searchParams.set('request[per_page]', '30');
+  url.searchParams.set('request[per_page]', '100');
   url.searchParams.set('request[fields][description]', 'true');
   url.searchParams.set('request[fields][short_description]', 'true');
   url.searchParams.set('request[fields][versions]', 'true');
@@ -133,7 +134,7 @@ export async function getPopularPlugins(category?: string, page = 1): Promise<WP
   url.searchParams.set('action', 'query_plugins');
   url.searchParams.set('request[browse]', category || 'popular');
   url.searchParams.set('request[page]', String(page));
-  url.searchParams.set('request[per_page]', '30');
+  url.searchParams.set('request[per_page]', '100');
   url.searchParams.set('request[fields][description]', 'true');
   url.searchParams.set('request[fields][short_description]', 'true');
   url.searchParams.set('request[fields][versions]', 'true');
