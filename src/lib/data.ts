@@ -1237,10 +1237,10 @@ export function calculateTrustScore(
       popularity: popularityScore,
     },
     breakdown: [
-      { name: 'Security Score', score: securityScore, weight: 0.40, description: 'Security analysis and vulnerability history' },
-      { name: 'Review Authenticity', score: reviewAuthScore, weight: 0.30, description: 'Percentage of verified real reviews' },
-      { name: 'Update Activity', score: updateScore, weight: 0.20, description: 'How recently the plugin was updated' },
-      { name: 'Popularity', score: Math.round(popularityScore), weight: 0.10, description: 'Active installs and user base' },
+      { name: 'Security Score', score: securityScore, weight: 0.40, description: securityScore > 85 ? 'Excellent security practices and update frequency' : 'Potential security concerns or infrequent updates' },
+      { name: 'Review Authenticity', score: reviewAuthScore, weight: 0.30, description: reviewAuthScore > 80 ? 'Highly reliable reviews from verified sites' : 'Significant number of suspicious or unverified reviews' },
+      { name: 'Update Activity', score: updateScore, weight: 0.20, description: updateScore > 80 ? 'Frequently maintained and compatible' : 'Slow update cycle detected' },
+      { name: 'Popularity', score: Math.round(popularityScore), weight: 0.10, description: popularityScore > 70 ? 'Widespread adoption across the WP ecosystem' : 'Niche or emerging plugin' },
     ],
   };
 }
