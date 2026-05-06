@@ -35,6 +35,12 @@ export interface WPSearchResult {
 
 // Convert WP plugin to our internal format
 export function transformWPPlugin(wp: WPPlugin) {
+  const safeDate = (dateStr: string) => {
+    if (!dateStr) return new Date().toISOString();
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  };
+
   return {
     id: `wp-${wp.id}`,
     slug: wp.slug,
@@ -43,7 +49,7 @@ export function transformWPPlugin(wp: WPPlugin) {
     fullDescription: wp.description?.replace(/<[^>]*>/g, '') || '',
     developer: wp.author?.replace(/<[^>]*>/g, '') || 'WordPress Contributor',
     website: wp.homepage,
-    lastUpdated: wp.last_updated ? new Date(wp.last_updated).toISOString() : new Date().toISOString(),
+    lastUpdated: safeDate(wp.last_updated),
     rating: wp.rating / 20 || 0, // WP ratings are out of 100
     reviewCount: wp.num_ratings || 0,
     activeInstalls: wp.downloaded || 0,
@@ -55,7 +61,6 @@ export function transformWPPlugin(wp: WPPlugin) {
     verifiedReviews: Math.floor((wp.num_ratings || 0) * 0.6), // Estimate 60% verified
     category: guessCategory(wp.tags, wp.short_description || ''),
     features: Object.values(wp.tags || {}).slice(0, 6),
-    lastUpdated: wp.last_updated ? new Date(wp.last_updated).toISOString() : new Date().toISOString(),
   };
 }
 
